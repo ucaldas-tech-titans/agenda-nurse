@@ -1,5 +1,5 @@
 # app
 
-Demo Soft3
+Proyecto Soft3
 
 
