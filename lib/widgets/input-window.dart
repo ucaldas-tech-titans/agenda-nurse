@@ -29,16 +29,42 @@ class InputWindow extends StatelessWidget {
           lastDate: DateTime(2026));
     }
 
+    void mostrarHora() {
+      showTimePicker(context: context, initialTime: TimeOfDay.now());
+    }
+
     return Column(
       children: [
+        Container(padding: EdgeInsets.all(10), child: Text("Editar horario")),
         Card(
           child: Container(
             width: double.infinity,
-            child: TextField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Hora inicio"),
-              onChanged: (val) {
-                value = val;
+            child: OutlinedButton(
+              child: Text("Hora inicio"),
+              onPressed: () {
+                mostrarHora();
+              },
+            ),
+          ),
+        ),
+        Card(
+          child: Container(
+            width: double.infinity,
+            child: OutlinedButton(
+              child: Text("Hora fin"),
+              onPressed: () {
+                mostrarHora();
+              },
+            ),
+          ),
+        ),
+        Card(
+          child: Container(
+            width: double.infinity,
+            child: OutlinedButton(
+              child: Text("Ingrese fecha"),
+              onPressed: () {
+                mostrarFecha();
               },
             ),
           ),
@@ -47,19 +73,7 @@ class InputWindow extends StatelessWidget {
           child: Container(
             width: double.infinity,
             child: TextField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Hora fin"),
-              onChanged: (val) {
-                value = val;
-              },
-            ),
-          ),
-        ),
-        Card(
-          child: Container(
-            width: double.infinity,
-            child: TextField(
-              keyboardType: TextInputType.datetime,
+              keyboardType: TextInputType.text,
               decoration: const InputDecoration(labelText: "Comentario"),
               onChanged: (val) {
                 value = val;
@@ -68,16 +82,10 @@ class InputWindow extends StatelessWidget {
           ),
         ),
         Container(
-          child: OutlinedButton(
-            child: Text("Ingrese fecha"),
-            onPressed: mostrarFecha,
-          ),
-        ),
-        Container(
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: colores["verde"]),
             child: Text("Aceptar"),
-            onPressed: (){},
+            onPressed: () {},
           ),
         )
         // Container(
