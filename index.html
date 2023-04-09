@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgendaNurse</title>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        table{
+            border: 1px solid black;
+            margin: 0;
+        }
+        table td,th{
+            margin: 0;
+            padding:5px;
+            border: 1px solid black;
+            text-align: center;
+        }
+        tr{
+            margin: 0;
+        }
+        .c{
+            width: 40px;
+            height: 40px;
+            float: left;
+        }
+        .cc p{
+            float: left;
+            margin: 10px;
+        }
+        #c1{
+            background: yellow;
+        }
+        #c2{
+            background: #38e138;
+        }
+        #c3{
+            background: #f953d7;
+        }
+        #c4{
+            background: #5acefb;
+        }
+        #c5{
+            background: #7f7fd5;
+        }
+        #c6{
+            background: green;
+        }
+        #c7{
+            background: #c45858;
+        }
+        #c8{
+            background: pink;
+        }
+        .cc{
+            margin: 10px;
+
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <div class="cc">
+            <p>Institucionalizados</p>
+            <div class="c" id="c1"></div>
+        </div>
+        <div class="cc">
+            <p>SanRafael</p>
+            <div class="c" id="c2"></div>
+        </div>
+        <div class="cc">
+            <p>JuanCiudad</p>
+            <div class="c" id="c3"></div>
+        </div>
+        <div class="cc">
+            <p>Mujeres</p>
+            <div class="c" id="c4"></div>
+        </div>
+        <div class="cc">
+            <p>Hombres</p>
+            <div class="c" id="c5"></div>
+        </div>
+        <div class="cc">
+            <p>IntermediasMujeres</p>
+            <div class="c" id="c6"></div>
+        </div>
+        <div class="cc">
+            <p>N1</p>
+            <div class="c" id="c7"></div>
+        </div>
+        <div class="cc">
+            <p>Vivo</p>
+            <div class="c" id="c8"></div>
+        </div>
+    </div>
+
+    <table>
+        <tr>
+            <th>Nombre</th>
+            <th>Dia1</th>
+            <th>Dia2</th>
+            <th>Dia3</th>
+            <th>Dia4</th>
+            <th>Dia5</th>
+            <th>Dia6</th>
+            <th>Dia7</th>
+            <th>Dia8</th>
+            <th>Dia9</th>
+            <th>Dia10</th>
+            <th>Dia11</th>
+            <th>Dia12</th>
+            <th>Dia13</th>
+            <th>Dia14</th>
+            <th>Dia15</th>
+            <th>Dia16</th>
+            <th>Dia17</th>
+            <th>Dia18</th>
+            <th>Dia19</th>
+            <th>Dia20</th>
+            <th>Dia21</th>
+            <th>Dia22</th>
+            <th>Dia23</th>
+            <th>Dia24</th>
+            <th>Dia25</th>
+            <th>Dia26</th>
+            <th>Dia27</th>
+            <th>Dia28</th>
+            <th>Dia29</th>
+            <th>Dia30</th>
+        </tr>
+    </table>
+    
+</body>
+
+<script src="horarios.js"></script>
+<script>
+    console.log(horarios);
+    let table = document.querySelector("table");
+    for(let i = 0; i<horarios.length;i++){
+        let tr = document.createElement("tr");
+        for (let j = 0; j < horarios[i].length; j++) {
+            let td = document.createElement("td");
+            if(horarios[i][j] == "Institucionalizados"){
+                td.style.background = "yellow";
+                td.textContent = "C";
+            }
+            else if(horarios[i][j] == "SanRafael"){
+                td.style.background = "#38e138";
+                td.textContent = "C";
+            }
+            else if(horarios[i][j] == "JuanCiudad"){
+                td.style.background = "#f953d7";
+                td.textContent = "C";
+            }
+            else if(horarios[i][j] == "Mujeres"){
+                td.style.background = "#5acefb";
+                td.textContent = "C";
+            }
+            else if(horarios[i][j] == "Hombres"){
+                td.style.background = "#7f7fd5";
+                td.textContent = "C";
+            }
+            else if(horarios[i][j] == "IntermediasMujeres"){
+                td.style.background = "green";
+                td.textContent = "C";
+            }
+            else if(horarios[i][j] == "N1"){
+                td.style.background = "#c45858";
+                td.textContent = horarios[i][j];
+            }
+            else if(horarios[i][j] == "Vivo"){
+                td.style.background = "pink";
+                td.textContent = "C";
+            }
+            else if(/Persona*/.test(horarios[i][j]) == true){
+                td.textContent = horarios[i][j];
+            }
+            else{
+                td.textContent = horarios[i][j];
+            }        
+            tr.appendChild(td);            
+        }
+        table.appendChild(tr);
+    }
+
+</script>
+
+</html>

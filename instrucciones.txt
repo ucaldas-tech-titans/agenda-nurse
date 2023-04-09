@@ -1,0 +1,6 @@
+Ejecutar horarios.py
+
+Este crea un documento .csv, llamado archivo.csv y también crea un archivo .js llamado horarios.js
+El archivo horarios.js se utiliza en index.html
+
+Una vez realizado esto, abrir en el navegador index.html
