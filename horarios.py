@@ -1,6 +1,6 @@
 import pandas as pd
 import random
-from os import remove
+from os import remove,path
 
 #por ahora no está implementado lo de vacaciones
 
@@ -89,7 +89,8 @@ asignarHorariosN1()
 
 #para mostrar en index.html
 def escribirArchivo(aux):
-    remove("horarios.js")
+    if path.exists("horarios.js"):
+        remove("horarios.js")
     with open("horarios.js","a") as f:
         f.write("let horarios = [")
         for i in range(len(aux)):
