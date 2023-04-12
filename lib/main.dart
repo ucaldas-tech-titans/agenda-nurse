@@ -1,4 +1,5 @@
 import 'package:app/colores/colores.dart';
+import 'package:app/widgets/horario-editable.dart';
 import 'package:app/widgets/horario.dart';
 import 'package:app/widgets/list-turnos.dart';
 import 'package:app/widgets/select-auxiliar.dart';
@@ -13,40 +14,33 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "Agenda Nurse",
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: HomePage(),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
   @override
   Widget build(BuildContext ctx) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Agenda Nurse"),
-          backgroundColor: colores["azul"],
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SelectAuxiliar(),
-              Horario(),
-              SelectDia(),
-              TurnosList(),
-            ],
-          ),
-        ));
+    return MaterialApp(
+      title: "Agenda Nurse",
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const HorarioEditable(),
+      debugShowCheckedModeBanner: false,
+    );
   }
 }
