@@ -1,9 +1,4 @@
-import 'package:app/colores/colores.dart';
 import 'package:app/widgets/horario-editable.dart';
-import 'package:app/widgets/horario.dart';
-import 'package:app/widgets/list-turnos.dart';
-import 'package:app/widgets/select-auxiliar.dart';
-import 'package:app/widgets/select-dia.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_core/firebase_core.dart';

@@ -92,10 +92,10 @@ BEGIN
             VALUE "CompanyName", "com.techtitans" "\0"
             VALUE "FileDescription", "app" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "app" "\0"
+            VALUE "InternalName", "agenda-nurse" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.techtitans. All rights reserved." "\0"
-            VALUE "OriginalFilename", "app.exe" "\0"
-            VALUE "ProductName", "app" "\0"
+            VALUE "OriginalFilename", "agenda-nurse.exe" "\0"
+            VALUE "ProductName", "agenda-nurse" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
