@@ -1,6 +1,6 @@
-import 'package:app/colores/colores.dart';
-import 'package:app/models/turno.dart';
-import 'package:app/widgets/input-window.dart';
+import 'package:agendanurse/colores/colores.dart';
+import 'package:agendanurse/models/turno.dart';
+import 'package:agendanurse/widgets/input-window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -15,25 +15,39 @@ class TurnosList extends StatefulWidget {
 
 class _TurnosListState extends State<TurnosList> {
   List<Turno> turnos = [
-    Turno(id: "id", name: "Juan Rivas", date: DateTime(2023, 2, 3)),
-    Turno(id: "id", name: "Mónica Rodríguez", date: DateTime(2022, 5, 3)),
+    Turno(
+        id: "id",
+        name: "Juan Rivas",
+        startDate: DateTime(2023, 2, 3),
+        endDate: DateTime(2023, 2, 3)),
+    Turno(
+        id: "id",
+        name: "Mónica Rodríguez",
+        startDate: DateTime(2022, 5, 3),
+        endDate: DateTime(2022, 5, 3)),
   ];
 
   void addTurno() {
     setState(() {
-      turnos.add(Turno(id: "id", name: "abc", date: DateTime.now()));
+      turnos.add(Turno(
+          id: "id",
+          name: "abc",
+          startDate: DateTime.now(),
+          endDate: DateTime.now().add(const Duration(hours: 8))));
     });
   }
 
-  void window(BuildContext context){
-    showModalBottomSheet(context: context, builder: (_){
-      return InputWindow();
-    });
+  void window(BuildContext context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (_) {
+          return InputWindow();
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 400,
       child: SingleChildScrollView(
         child: Column(
@@ -49,7 +63,7 @@ class _TurnosListState extends State<TurnosList> {
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -63,14 +77,15 @@ class _TurnosListState extends State<TurnosList> {
                             ),
                             Text(
                                 style: TextStyle(color: colores["negro"]),
-                                DateFormat.yMMMMEEEEd().format(turno.date)),
+                                DateFormat.yMMMMEEEEd()
+                                    .format(turno.startDate)),
                             Text(
                               style: TextStyle(color: colores["negro"]),
-                              DateFormat.jm().format(turno.date),
+                              DateFormat.jm().format(turno.startDate),
                             ),
                             Container(
                               child: IconButton(
-                                icon: Icon(Icons.edit),
+                                icon: const Icon(Icons.edit),
                                 onPressed: () {
                                   window(context);
                                 },

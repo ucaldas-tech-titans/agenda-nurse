@@ -1,4 +1,4 @@
-package com.example.demo_juan_duque
+package com.techtitans.agendanurse
 
 import io.flutter.embedding.android.FlutterActivity
 
