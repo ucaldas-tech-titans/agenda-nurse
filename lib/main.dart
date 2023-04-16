@@ -1,4 +1,6 @@
 import 'package:agendanurse/widgets/horario-editable.dart';
+import 'package:agendanurse/widgets/horario.dart';
+import 'package:agendanurse/widgets/list-turnos.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -34,7 +36,28 @@ class HomePage extends StatelessWidget {
     return MaterialApp(
       title: "Agenda Nurse",
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const HorarioEditable(),
+      home: DefaultTabController(
+        length: 3,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text("Agenda Nurse"),
+            bottom: const TabBar(
+              tabs: [
+                Tab(icon: Icon(Icons.calendar_today)),
+                Tab(icon: Icon(Icons.calendar_today)),
+                Tab(icon: Icon(Icons.calendar_today)),
+              ],
+            ),
+          ),
+          body: const TabBarView(
+            children: [
+              HorarioEditable(),
+              Horario(),
+              TurnosList(),
+            ],
+          ),
+        ),
+      ),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -19,6 +19,23 @@ class _HorarioEnfermerasState extends State<HorarioEditable> {
           name: "Pepita",
           startDate: DateTime(2023, 4, 12, 8),
           endDate: DateTime(2023, 4, 12, 16)),
+      Turno(
+          id: "id",
+          name: "Pepita",
+          startDate: DateTime(2023, 4, 13, 8),
+          endDate: DateTime(2023, 4, 13, 16)),
+    ]),
+    Enfermera(nombre: "Samantha", turnos: [
+      Turno(
+          id: "id",
+          name: "Samantha",
+          startDate: DateTime(2023, 4, 14, 8),
+          endDate: DateTime(2023, 4, 14, 16)),
+      Turno(
+          id: "id",
+          name: "Samantha",
+          startDate: DateTime(2023, 4, 17, 8),
+          endDate: DateTime(2023, 4, 17, 16)),
     ]),
   ];
 
@@ -165,11 +182,12 @@ class _HorarioEnfermerasState extends State<HorarioEditable> {
     return null;
   }
 
-  void _asignarTurno(int hora, DateTime dia) {}
+  void _asignarTurno(int hora, DateTime dia) {
+    print('Asignar turno a las $hora del día $dia');
+  }
 
   void _desasignarTurno(int hora, DateTime dia) {
-    // Aquí puedes agregar la lógica para desasignar un turno a una enfermera
-    // según las reglas de negocio
+    print('Desasignar turno a las $hora del día $dia');
   }
 
   bool _turnoValido(int hora, DateTime dia) {
