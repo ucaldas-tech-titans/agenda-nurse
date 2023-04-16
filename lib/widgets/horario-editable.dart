@@ -1,5 +1,5 @@
-import 'package:app/models/enfermera.dart';
-import 'package:app/models/turno.dart';
+import 'package:agendanurse/models/enfermera.dart';
+import 'package:agendanurse/models/turno.dart';
 import 'package:flutter/material.dart';
 
 class HorarioEditable extends StatefulWidget {

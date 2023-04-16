@@ -1,4 +1,4 @@
-import 'package:app/models/turno.dart';
+import 'package:agendanurse/models/turno.dart';
 
 class Enfermera {
   String nombre;
