@@ -1,12 +1,14 @@
+import 'package:agendanurse/models/nurse.dart';
+import 'package:agendanurse/models/shift.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-Future<void> listAvailableSchedules() async {
+Future<List<List<DateTime>>> listUnavailableSchedules() async {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  // Realiza la consulta para obtener todos los turnos
+  // Realiza la consulta para obtener todos los shifts
   QuerySnapshot snapshot = await firestore.collection('shifts').get();
 
-  // Agrupa los turnos que se superponen
+  // Agrupa los shifts que se superponen
   List<List<QueryDocumentSnapshot>> overlappingShiftGroups = [];
   for (var shift in snapshot.docs) {
     bool shiftAdded = false;
@@ -33,20 +35,54 @@ Future<void> listAvailableSchedules() async {
     }
   }
 
-  // Filtra los grupos de turnos que tienen menos de 6 personas asignadas
-  List<String> availableSchedules = [];
+  // Filtra los grupos de shifts que tienen menos de 6 personas asignadas
+  List<List<DateTime>> unavailableSchedules = [];
+
   for (var shiftGroup in overlappingShiftGroups) {
     if (shiftGroup.length < 6) {
-      DateTime startDate = shiftGroup.first['start_date'].toDate();
-      DateTime finishDate = shiftGroup.first['finish_date'].toDate();
-      availableSchedules
-          .add('${startDate.toString()} - ${finishDate.toString()}');
+      continue;
     }
+
+    DateTime startDate = shiftGroup.first['start_date'].toDate();
+    DateTime finishDate = shiftGroup.first['finish_date'].toDate();
+
+    unavailableSchedules.add([startDate, finishDate]);
   }
 
-  // Imprime los horarios disponibles en la consola
-  print('Horarios disponibles:');
-  for (var schedule in availableSchedules) {
-    print(schedule);
-  }
+  return unavailableSchedules;
+}
+
+Future<List<Shift>> listNurseShifts(Nurse nurse) async {
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  // Realiza la consulta para obtener todos los shifts
+  QuerySnapshot snapshot = await firestore
+      .collection('shifts')
+      .where('nurse_id', isEqualTo: nurse.id)
+      .get();
+
+  List<Shift> shifts =
+      snapshot.docs.map((doc) => Shift.fromFirestoreSnapshot(doc)).toList();
+
+  return shifts;
+}
+
+Future<QuerySnapshot> listWeekShifts() async {
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  // Calcula la fecha y hora del inicio de la semana actual
+  DateTime now = DateTime.now();
+  DateTime startOfWeek = now.subtract(Duration(
+      days: now.weekday - 1,
+      hours: now.hour,
+      minutes: now.minute,
+      seconds: now.second));
+
+  // Realiza la consulta para obtener las horas trabajadas de cada enfermera en la semana actual
+  QuerySnapshot snapshot = await firestore
+      .collection('shifts')
+      .where('start_date', isGreaterThanOrEqualTo: startOfWeek)
+      .get();
+
+  return snapshot;
 }
