@@ -14,7 +14,6 @@ class ChangeNurseShift extends StatefulWidget {
 
 class _ChangeNurseShiftState extends State<ChangeNurseShift> {
   Nurse? _selectedNurse;
-  List<Shift> shifts = [];
 
   final Stream<QuerySnapshot> _weekShiftsStream = FirebaseFirestore.instance
       .collection('shifts')
@@ -23,72 +22,74 @@ class _ChangeNurseShiftState extends State<ChangeNurseShift> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Nurse Shift Calendar'),
-          actions: _buildAppBarActions(),
-        ),
-        body: Center(
-          child: Builder(builder: (BuildContext context) {
-            if (_selectedNurse != null) {
-              return NurseShiftCalendar(nurse: _selectedNurse!, shifts: shifts);
-            }
+    return StreamBuilder<QuerySnapshot>(
+      stream: _weekShiftsStream,
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
 
-            return StreamBuilder<QuerySnapshot>(
-              stream: _weekShiftsStream,
-              builder: (BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
+        if (snapshot.hasError) {
+          return Scaffold(
+              body: Center(child: Text('Error: ${snapshot.error}')));
+        }
 
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                }
+        QuerySnapshot currentWeekShiftsQuerySnapshot = snapshot.data!;
 
-                QuerySnapshot currentWeekShiftsQuerySnapshot = snapshot.data!;
+        List<Shift> weekShifts = [];
 
-                if (currentWeekShiftsQuerySnapshot.docs.isEmpty) {
-                  return const Text('No shifts found');
-                }
+        for (var shiftDoc in currentWeekShiftsQuerySnapshot.docs) {
+          try {
+            weekShifts.add(Shift.fromFirestoreSnapshot(shiftDoc));
+          } catch (e) {
+            print(
+                "Error loading shift: ${shiftDoc.id} - ${shiftDoc.data()} - $e");
+          }
+        }
 
-                shifts = [];
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Nurse Shift Calendar'),
+            actions: _buildAppBarActions(weekShifts),
+          ),
+          body: Center(
+            child: Builder(builder: (BuildContext context) {
+              if (_selectedNurse != null) {
+                return NurseShiftCalendar(
+                    nurse: _selectedNurse!, shifts: weekShifts);
+              }
 
-                for (var shiftDoc in currentWeekShiftsQuerySnapshot.docs) {
-                  try {
-                    shifts.add(Shift.fromFirestoreSnapshot(shiftDoc));
-                  } catch (e) {
-                    print(
-                        "Error loading shift: ${shiftDoc.id} - ${shiftDoc.data()} - $e");
-                  }
-                }
-
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Select a nurse to view their shifts'),
-                      _buildNursesDropdown(),
-                    ],
-                  ),
-                );
-              },
-            );
-          }),
-        ));
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Select a nurse to view their shifts'),
+                    _buildNursesDropdown(weekShifts),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
   }
 
-  List<Widget> _buildAppBarActions() {
+  List<Widget> _buildAppBarActions(List<Shift> weekShifts) {
     if (_selectedNurse != null) {
-      return [_buildNursesDropdown(preselectedNurseID: _selectedNurse!.id)];
+      return [
+        _buildNursesDropdown(weekShifts, preselectedNurseID: _selectedNurse!.id)
+      ];
     }
 
     return [];
   }
 
-  NursesDropdown _buildNursesDropdown({String? preselectedNurseID}) {
+  NursesDropdown _buildNursesDropdown(List<Shift> weekShifts,
+      {String? preselectedNurseID}) {
     return NursesDropdown(
-      weekShifts: shifts,
+      weekShifts: weekShifts,
       preSelectedNurseID: preselectedNurseID,
       onChanged: (Nurse? nurse) {
         setState(() {

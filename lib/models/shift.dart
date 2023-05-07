@@ -1,16 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum ShiftType {
+  NURSE,
+  BUSY,
+}
+
 class Shift {
   final String id;
   String? nurseID;
   DateTime startDate;
   DateTime finishDate;
+  ShiftType? type;
 
   Shift(
       {required this.id,
       required this.startDate,
       required this.finishDate,
-      required this.nurseID});
+      required this.nurseID,
+      this.type});
 
   factory Shift.fromFirestoreSnapshot(QueryDocumentSnapshot snapshot) {
     if (!snapshot.exists) {
@@ -57,11 +64,62 @@ class Shift {
         nurseID: map['nurse_id']);
   }
 
+  Map<String, dynamic> toFirestoreMap() {
+    return {
+      'start_date': startDate,
+      'finish_date': finishDate,
+      'nurse_id': nurseID,
+    };
+  }
+
+  void validate() {
+    if (startDate.isAfter(finishDate)) {
+      throw ArgumentError.value(
+        startDate,
+        'startDate',
+        'The start date must be before the finish date',
+      );
+    }
+
+    if (nurseID == null) {
+      throw ArgumentError.value(
+        nurseID,
+        'nurseID',
+        'The nurse ID must not be null',
+      );
+    }
+
+    if (nurseID!.isEmpty) {
+      throw ArgumentError.value(
+        nurseID,
+        'nurseID',
+        'The nurse ID must not be empty',
+      );
+    }
+
+    if (duration.inHours > 8) {
+      throw ArgumentError.value(
+        duration,
+        'duration',
+        'The duration must not be longer than 8 hours',
+      );
+    }
+  }
+
+  bool overlaps(Shift other) {
+    return startDate.isBefore(other.finishDate) &&
+            startDate.isAfter(other.startDate) ||
+        finishDate.isBefore(other.finishDate) &&
+            finishDate.isAfter(other.startDate) ||
+        startDate == other.startDate ||
+        finishDate == other.finishDate;
+  }
+
   Duration get duration {
     return finishDate.difference(startDate);
   }
 
-  String get subject {
-    return '${startDate.day}/${startDate.month}/${startDate.year} - ${startDate.hour}:${startDate.minute} - ${finishDate.hour}:${finishDate.minute}';
+  String subject(String nurseName) {
+    return '$nurseName \n${startDate.day}/${startDate.month}/${startDate.year} - ${startDate.hour.toString().padLeft(2, '0')}:${startDate.minute.toString().padLeft(2, '0')} - ${finishDate.hour.toString().padLeft(2, '0')}:${finishDate.minute.toString().padLeft(2, '0')}';
   }
 }

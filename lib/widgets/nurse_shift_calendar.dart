@@ -1,5 +1,6 @@
 import 'package:agendanurse/models/nurse.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:agendanurse/models/shift_calendar_data_source.dart';
+import 'package:agendanurse/services/shifts.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:agendanurse/models/shift.dart';
@@ -16,56 +17,77 @@ class NurseShiftCalendar extends StatefulWidget {
 }
 
 class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
+  Shift? _originalShift;
+
   @override
   Widget build(BuildContext context) {
-    Stream<QuerySnapshot<Map<String, dynamic>>> selectedNurseShiftsStream =
-        FirebaseFirestore.instance
-            .collection('shifts')
-            .where('nurse_id', isEqualTo: widget.nurse.id)
-            .snapshots();
+    return Builder(builder: (BuildContext context) {
+      List<Shift> displayShifts = widget.shifts;
 
-    return StreamBuilder<QuerySnapshot>(
-        stream: selectedNurseShiftsStream,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
+      displayShifts = displayShifts.where((shift) {
+        return shift.nurseID == widget.nurse.id;
+      }).toList();
+
+      // Agrupa los shifts que se superponen
+      List<List<Shift>> overlappingShiftGroups = [];
+      for (var shift in widget.shifts) {
+        bool shiftAdded = false;
+        DateTime shiftStartDate = shift.startDate;
+        DateTime shiftFinishDate = shift.finishDate;
+
+        for (List<Shift> shiftGroup in overlappingShiftGroups) {
+          Shift firstShiftInGroup = shiftGroup.first;
+          DateTime groupStartDate = firstShiftInGroup.startDate;
+          DateTime groupFinishDate = firstShiftInGroup.finishDate;
+
+          bool shiftsOverlap = shiftStartDate.isBefore(groupFinishDate) &&
+              shiftFinishDate.isAfter(groupStartDate);
+
+          if (shiftsOverlap) {
+            shiftGroup.add(shift);
+            shiftAdded = true;
+            break;
           }
+        }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+        if (!shiftAdded) {
+          overlappingShiftGroups.add([shift]);
+        }
+      }
 
-          QuerySnapshot selectedNurseShiftsQuerySnapshot = snapshot.data!;
+      // Filtra los grupos de shifts que tienen menos de 6 personas asignadas
+      List<Shift> busyShifts = [];
 
-          if (selectedNurseShiftsQuerySnapshot.docs.isEmpty) {
-            return const Text('No shifts found');
-          }
+      for (var shiftGroup in overlappingShiftGroups) {
+        if (shiftGroup.length < 6) {
+          continue;
+        }
 
-          List<Shift> selectedNurseShifts = [];
+        DateTime startDate = shiftGroup.first.startDate;
+        DateTime finishDate = shiftGroup.first.finishDate;
 
-          for (var shiftDoc in selectedNurseShiftsQuerySnapshot.docs) {
-            try {
-              selectedNurseShifts.add(Shift.fromFirestoreSnapshot(shiftDoc));
-            } catch (e) {
-              print(
-                  "Error loading shift: ${shiftDoc.id} - ${shiftDoc.data()} - $e");
-            }
-          }
+        busyShifts.add(Shift(
+          id: '',
+          startDate: startDate,
+          finishDate: finishDate,
+          nurseID: widget.nurse.id,
+        ));
+      }
 
-          return _buildCalendar(selectedNurseShifts);
-        });
+      displayShifts.addAll(busyShifts);
+
+      return _buildCalendar(displayShifts);
+    });
   }
 
   SfCalendar _buildCalendar(List<Shift> shifts) {
     return SfCalendar(
       view: CalendarView.week,
-      dataSource: ShiftDataSource(shifts),
+      dataSource: ShiftDataSource(shifts, widget.nurse),
       allowAppointmentResize: true,
       onTap: _tap,
-      onLongPress: _longPress,
       onAppointmentResizeEnd: _appointmentResizeEnd,
+      onAppointmentResizeStart: _appointmentResizeStart,
     );
   }
 
@@ -79,112 +101,263 @@ class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
           content: Text(
             'From: ${shift.startDate}\nTo: ${shift.finishDate}',
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showEditDialog(shift);
+              },
+              child: const Text('Edit'),
+            ),
+          ],
         );
       },
     );
   }
 
-  void _editShift(Shift newShift) {
-    // Add the implementation to edit the appointment.
-    print("Edit Shift: $newShift");
+  Future<void> _editShift(Shift newShift) async {
+    return updateShift(newShift);
   }
 
-  void _addShift(Shift shift) {
-    // Add the implementation to add a new appointment.
-    print("Add Shift: $shift");
-  }
-
-  void _showEditModal(Shift shift) {
-    // Add the implementation to show the appointment editor based on the shift.
-    print("Show Edit Modal: $shift");
-  }
-
-  void _longPress(CalendarLongPressDetails details) {
-    if (details.targetElement != CalendarElement.appointment) {
+  Future<void> _addShift(Shift shift) async {
+    if (_shiftOverlaps(shift)) {
       return;
     }
 
-    _showShiftDetails(context, details.appointments![0]);
+    try {
+      await createShift(shift);
+    } catch (e) {
+      print(e);
+      showDialog(
+        context: context,
+        builder: (context) {
+          return const AlertDialog(
+            title: Text('Error'),
+            content: Text('Error adding shift'),
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _deleteShift(String shiftID) async {
+    try {
+      await deleteShift(shiftID);
+    } catch (e) {
+      print(e);
+      showDialog(
+        context: context,
+        builder: (context) {
+          return const AlertDialog(
+            title: Text('Error'),
+            content: Text('Error deleting shift'),
+          );
+        },
+      );
+    }
+  }
+
+  void _showDeleteShiftDialog(Shift shift) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Are you sure you want to delete this shift?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('From: ${shift.startDate}'),
+              Text('To: ${shift.finishDate}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteShift(shift.id);
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(Colors.red),
+                foregroundColor: MaterialStateProperty.all(Colors.white),
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditDialog(Shift shift) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit shift'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('From: ${shift.startDate}'),
+              Text('To: ${shift.finishDate}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showDeleteShiftDialog(shift);
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(Colors.red),
+                foregroundColor: MaterialStateProperty.all(Colors.white),
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _tap(CalendarTapDetails details) {
-    if (details.targetElement == CalendarElement.appointment) {
-      _showEditModal(details.targetElement as Shift);
+    if (details.targetElement != CalendarElement.appointment) {
+      _addShift(Shift(
+        id: '',
+        startDate: details.date!,
+        finishDate: details.date!.add(const Duration(hours: 1)),
+        nurseID: widget.nurse.id,
+      ));
+
       return;
     }
 
-    _addShift(Shift(
-      id: '',
-      startDate: details.date!,
-      finishDate: details.date!.add(const Duration(hours: 1)),
-      nurseID: widget.nurse.id,
-    ));
-  }
-
-  void _appointmentResizeEnd(
-      AppointmentResizeEndDetails appointmentResizeEndDetails) {
-    dynamic appointment = appointmentResizeEndDetails.appointment;
-    DateTime? startTime = appointmentResizeEndDetails.startTime;
-    DateTime? endTime = appointmentResizeEndDetails.endTime;
-    CalendarResource? resourceDetails = appointmentResizeEndDetails.resource;
-
-    _editShift(
-      Shift(
-        id: appointment.id,
-        startDate: startTime!,
-        finishDate: endTime!,
-        nurseID: widget.nurse.id,
-      ),
-    );
-  }
-
-  List<Shift> _getDataSource() {
-    return widget.shifts;
-  }
-}
-
-class ShiftDataSource extends CalendarDataSource<Shift> {
-  ShiftDataSource(List<Shift> source) {
-    appointments = source;
-  }
-
-  @override
-  DateTime getStartTime(int index) {
-    return _getShiftData(index).startDate;
-  }
-
-  @override
-  DateTime getEndTime(int index) {
-    return _getShiftData(index).finishDate;
-  }
-
-  @override
-  String getSubject(int index) {
-    return _getShiftData(index).subject;
-  }
-
-  @override
-  Color getColor(int index) {
-    return index % 2 == 0 ? Colors.green : Colors.red;
-  }
-
-  @override
-  Shift convertAppointmentToObject(Shift customData, Appointment appointment) {
-    return Shift(
-      id: customData.id,
-      startDate: appointment.startTime,
-      finishDate: appointment.endTime,
-      nurseID: customData.nurseID,
-    );
-  }
-
-  Shift _getShiftData(int index) {
-    final dynamic shift = appointments![index];
-    late final Shift shiftData;
-    if (shift is Shift) {
-      shiftData = shift;
+    dynamic appointment = details.appointments!.first;
+    if (appointment is! Shift) {
+      return;
     }
 
-    return shiftData;
+    _showShiftDetails(context, appointment);
+  }
+
+  void _appointmentResizeStart(
+      AppointmentResizeStartDetails appointmentResizeStartDetails) {
+    dynamic appointment = appointmentResizeStartDetails.appointment;
+    if (appointment is! Shift) {
+      return;
+    }
+
+    _originalShift = appointment;
+  }
+
+  Future<void> _appointmentResizeEnd(
+      AppointmentResizeEndDetails appointmentResizeEndDetails) async {
+    dynamic appointment = appointmentResizeEndDetails.appointment;
+    if (appointment is! Shift) {
+      return;
+    }
+
+    Shift shift = appointment;
+
+    if (appointment.type == ShiftType.BUSY) {
+      setState(() {
+        appointment.startDate = _originalShift!.startDate;
+        appointment.finishDate = _originalShift!.finishDate;
+      });
+
+      _originalShift = null;
+
+      return;
+    }
+
+    if (_shiftOverlaps(shift)) {
+      setState(() {
+        appointment.startDate = _originalShift!.startDate;
+        appointment.finishDate = _originalShift!.finishDate;
+      });
+
+      _originalShift = null;
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return const AlertDialog(
+            title: Text('Error'),
+            content: Text('Shift overlaps with another shift'),
+          );
+        },
+      );
+
+      return;
+    }
+
+    // Set nearest hour as start time
+    DateTime startTime = shift.startDate;
+    startTime = DateTime(
+      startTime.year,
+      startTime.month,
+      startTime.day,
+      startTime.hour + (startTime.minute >= 30 ? 1 : 0),
+    );
+
+    // Set nearest hour as finish time
+    DateTime finishTime = shift.finishDate;
+    finishTime = DateTime(
+      finishTime.year,
+      finishTime.month,
+      finishTime.day,
+      finishTime.hour + (finishTime.minute >= 30 ? 1 : 0),
+    );
+
+    try {
+      await _editShift(
+        Shift(
+            id: appointment.id,
+            startDate: startTime,
+            finishDate: finishTime,
+            nurseID: widget.nurse.id),
+      );
+    } catch (e) {
+      setState(() {
+        appointment.startDate = _originalShift!.startDate;
+        appointment.finishDate = _originalShift!.finishDate;
+      });
+
+      showDialog(
+          context: context,
+          builder: (context) {
+            return const AlertDialog(
+              title: Text('Error'),
+              content: Text('Error editing shift'),
+            );
+          });
+    } finally {
+      setState(() {
+        _originalShift = null;
+      });
+    }
+  }
+
+  bool _shiftOverlaps(Shift shift) {
+    return widget.shifts
+        .where((s) => s.nurseID == shift.nurseID)
+        .any((s) => shift.overlaps(s));
   }
 }
