@@ -1,6 +1,4 @@
-import 'package:agendanurse/widgets/horario-editable.dart';
-import 'package:agendanurse/widgets/horario.dart';
-import 'package:agendanurse/widgets/list-turnos.dart';
+import 'package:agendanurse/widgets/change_nurse_shift.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -20,45 +18,34 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Agenda Nurse",
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const HomePage(),
-      debugShowCheckedModeBanner: false,
+      title: 'Nurse Shift Manager',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: const HomeView(),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomeView extends StatelessWidget {
+  const HomeView({super.key});
 
   @override
-  Widget build(BuildContext ctx) {
-    return MaterialApp(
-      title: "Agenda Nurse",
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: DefaultTabController(
-        length: 3,
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text("Agenda Nurse"),
-            bottom: const TabBar(
-              tabs: [
-                Tab(icon: Icon(Icons.calendar_today)),
-                Tab(icon: Icon(Icons.calendar_today)),
-                Tab(icon: Icon(Icons.calendar_today)),
-              ],
-            ),
-          ),
-          body: const TabBarView(
-            children: [
-              HorarioEditable(),
-              Horario(),
-              TurnosList(),
-            ],
-          ),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Nurse Shift Manager')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ChangeNurseShift()),
+            );
+          },
+          child: const Text('Manage Nurse Shifts'),
         ),
       ),
-      debugShowCheckedModeBanner: false,
     );
   }
 }

@@ -5,12 +5,14 @@ import 'package:flutter/src/widgets/placeholder.dart';
 
 class InputWindow extends StatelessWidget {
   String value = "";
+
+  InputWindow({super.key});
   // final Function addThis;
 
   // InputWindow(this.addThis);
   // InputWindow();
 
-  // void editTurno(BuildContext ctx) {
+  // void editShift(BuildContext ctx) {
   //   showModalBottomSheet(
   //     context: ctx,
   //     builder: (ctx2) {
@@ -35,12 +37,14 @@ class InputWindow extends StatelessWidget {
 
     return Column(
       children: [
-        Container(padding: EdgeInsets.all(10), child: Text("Editar horario")),
+        Container(
+            padding: const EdgeInsets.all(10),
+            child: const Text("Editar horario")),
         Card(
-          child: Container(
+          child: SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              child: Text("Hora inicio"),
+              child: const Text("Hora inicio"),
               onPressed: () {
                 mostrarHora();
               },
@@ -48,10 +52,10 @@ class InputWindow extends StatelessWidget {
           ),
         ),
         Card(
-          child: Container(
+          child: SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              child: Text("Hora fin"),
+              child: const Text("Hora fin"),
               onPressed: () {
                 mostrarHora();
               },
@@ -59,10 +63,10 @@ class InputWindow extends StatelessWidget {
           ),
         ),
         Card(
-          child: Container(
+          child: SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              child: Text("Ingrese fecha"),
+              child: const Text("Ingrese fecha"),
               onPressed: () {
                 mostrarFecha();
               },
@@ -70,7 +74,7 @@ class InputWindow extends StatelessWidget {
           ),
         ),
         Card(
-          child: Container(
+          child: SizedBox(
             width: double.infinity,
             child: TextField(
               keyboardType: TextInputType.text,
@@ -84,7 +88,7 @@ class InputWindow extends StatelessWidget {
         Container(
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: colores["verde"]),
-            child: Text("Aceptar"),
+            child: const Text("Aceptar"),
             onPressed: () {},
           ),
         )
@@ -93,9 +97,9 @@ class InputWindow extends StatelessWidget {
         //     onPressed: () {
         //       print("value " + value);
         //       addThis();
-        //       editTurno(context);
+        //       editShift(context);
         //     },
-        //     child: Text("Agregar turno"),
+        //     child: Text("Agregar shift"),
         //   ),
         // ),
       ],
