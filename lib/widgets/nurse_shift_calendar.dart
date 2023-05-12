@@ -17,8 +17,6 @@ class NurseShiftCalendar extends StatefulWidget {
 }
 
 class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
-  Shift? _originalShift;
-
   @override
   Widget build(BuildContext context) {
     return Builder(builder: (BuildContext context) {
@@ -84,10 +82,8 @@ class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
     return SfCalendar(
       view: CalendarView.week,
       dataSource: ShiftDataSource(shifts, widget.nurse),
-      allowAppointmentResize: true,
       onTap: _tap,
-      onAppointmentResizeEnd: _appointmentResizeEnd,
-      onAppointmentResizeStart: _appointmentResizeStart,
+      onLongPress: _longPress,
     );
   }
 
@@ -122,6 +118,13 @@ class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
   }
 
   Future<void> _editShift(Shift newShift) async {
+    Shift? joinableShift = _getJoinableShift(newShift);
+
+    if (joinableShift != null) {
+      _joinShift(newShift, joinableShift);
+      return;
+    }
+
     return updateShift(newShift);
   }
 
@@ -131,6 +134,12 @@ class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
     }
 
     try {
+      Shift? joinableShift = _getJoinableShift(shift);
+      if (joinableShift != null) {
+        await _joinShift(shift, joinableShift);
+        return;
+      }
+
       await createShift(shift);
     } catch (e) {
       print(e);
@@ -161,6 +170,46 @@ class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
         },
       );
     }
+  }
+
+  Future<void> _joinShift(Shift shift, Shift joinableShift) {
+    if (shift.couldBeJoinedBackwards(joinableShift)) {
+      return _joinShiftBackwards(shift, joinableShift);
+    }
+
+    if (shift.couldBeJoinedForwards(joinableShift)) {
+      return _joinShiftForwards(shift, joinableShift);
+    }
+
+    throw Exception('Shifts could not be joined');
+  }
+
+  Future<void> _joinShiftBackwards(Shift shift, Shift joinableShift) async {
+    DateTime newStartDate = joinableShift.startDate;
+    DateTime newFinishDate = shift.finishDate;
+
+    Shift newShift = Shift(
+      id: joinableShift.id,
+      startDate: newStartDate,
+      finishDate: newFinishDate,
+      nurseID: shift.nurseID,
+    );
+
+    await _editShift(newShift);
+  }
+
+  Future<void> _joinShiftForwards(Shift shift, Shift joinableShift) async {
+    DateTime newStartDate = shift.startDate;
+    DateTime newFinishDate = joinableShift.finishDate;
+
+    Shift newShift = Shift(
+      id: joinableShift.id,
+      startDate: newStartDate,
+      finishDate: newFinishDate,
+      nurseID: shift.nurseID,
+    );
+
+    await _editShift(newShift);
   }
 
   void _showDeleteShiftDialog(Shift shift) {
@@ -257,107 +306,49 @@ class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
     _showShiftDetails(context, appointment);
   }
 
-  void _appointmentResizeStart(
-      AppointmentResizeStartDetails appointmentResizeStartDetails) {
-    dynamic appointment = appointmentResizeStartDetails.appointment;
+  void _longPress(CalendarLongPressDetails details) {
+    if (details.targetElement != CalendarElement.appointment) {
+      return;
+    }
+
+    dynamic appointment = details.appointments!.first;
     if (appointment is! Shift) {
       return;
     }
 
-    _originalShift = appointment;
-  }
-
-  Future<void> _appointmentResizeEnd(
-      AppointmentResizeEndDetails appointmentResizeEndDetails) async {
-    dynamic appointment = appointmentResizeEndDetails.appointment;
-    if (appointment is! Shift) {
+    DateTime newFinishDate =
+        appointment.finishDate.subtract(const Duration(hours: 1));
+    if (newFinishDate.isBefore(appointment.startDate)) {
+      _showDeleteShiftDialog(appointment);
       return;
     }
 
-    Shift shift = appointment;
-
-    if (appointment.type == ShiftType.BUSY) {
-      setState(() {
-        appointment.startDate = _originalShift!.startDate;
-        appointment.finishDate = _originalShift!.finishDate;
-      });
-
-      _originalShift = null;
-
-      return;
-    }
-
-    if (_shiftOverlaps(shift)) {
-      setState(() {
-        appointment.startDate = _originalShift!.startDate;
-        appointment.finishDate = _originalShift!.finishDate;
-      });
-
-      _originalShift = null;
-
-      showDialog(
-        context: context,
-        builder: (context) {
-          return const AlertDialog(
-            title: Text('Error'),
-            content: Text('Shift overlaps with another shift'),
-          );
-        },
-      );
-
-      return;
-    }
-
-    // Set nearest hour as start time
-    DateTime startTime = shift.startDate;
-    startTime = DateTime(
-      startTime.year,
-      startTime.month,
-      startTime.day,
-      startTime.hour + (startTime.minute >= 30 ? 1 : 0),
+    Shift newShift = Shift(
+      id: appointment.id,
+      startDate: appointment.startDate,
+      finishDate: newFinishDate,
+      nurseID: appointment.nurseID,
+      type: appointment.type,
     );
 
-    // Set nearest hour as finish time
-    DateTime finishTime = shift.finishDate;
-    finishTime = DateTime(
-      finishTime.year,
-      finishTime.month,
-      finishTime.day,
-      finishTime.hour + (finishTime.minute >= 30 ? 1 : 0),
-    );
-
-    try {
-      await _editShift(
-        Shift(
-            id: appointment.id,
-            startDate: startTime,
-            finishDate: finishTime,
-            nurseID: widget.nurse.id),
-      );
-    } catch (e) {
-      setState(() {
-        appointment.startDate = _originalShift!.startDate;
-        appointment.finishDate = _originalShift!.finishDate;
-      });
-
-      showDialog(
-          context: context,
-          builder: (context) {
-            return const AlertDialog(
-              title: Text('Error'),
-              content: Text('Error editing shift'),
-            );
-          });
-    } finally {
-      setState(() {
-        _originalShift = null;
-      });
-    }
+    _editShift(newShift);
   }
 
   bool _shiftOverlaps(Shift shift) {
     return widget.shifts
         .where((s) => s.nurseID == shift.nurseID)
         .any((s) => shift.overlaps(s));
+  }
+
+  Shift? _getJoinableShift(Shift shift) {
+    try {
+      return widget.shifts.firstWhere((other) => shift.couldBeJoined(other));
+    } catch (e) {
+      if (e is! StateError) {
+        print(e);
+      }
+
+      return null;
+    }
   }
 }

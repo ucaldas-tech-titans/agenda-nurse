@@ -115,6 +115,30 @@ class Shift {
         finishDate == other.finishDate;
   }
 
+  bool couldBeJoinedBackwards(Shift other) {
+    if (other.type == ShiftType.BUSY) {
+      return false;
+    }
+
+    if (nurseID != other.nurseID) {
+      return false;
+    }
+
+    return startDate == other.finishDate &&
+        nurseID == other.nurseID &&
+        startDate.difference(other.finishDate).inHours <= 8;
+  }
+
+  bool couldBeJoinedForwards(Shift other) {
+    return finishDate == other.startDate &&
+        nurseID == other.nurseID &&
+        other.startDate.difference(finishDate).inHours <= 8;
+  }
+
+  bool couldBeJoined(Shift other) {
+    return couldBeJoinedBackwards(other) || couldBeJoinedForwards(other);
+  }
+
   Duration get duration {
     return finishDate.difference(startDate);
   }
