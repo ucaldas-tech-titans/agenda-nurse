@@ -1,4 +1,5 @@
 {
   "java.configuration.updateBuildConfiguration": "automatic",
-  "cSpell.language": "en,es-ES"
+  "cSpell.language": "en,es-ES",
+  "C_Cpp.default.compilerPath": ""
 }
