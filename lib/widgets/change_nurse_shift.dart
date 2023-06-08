@@ -48,6 +48,13 @@ class _ChangeNurseShiftState extends State<ChangeNurseShift> {
           }
         }
 
+        weekShifts.add(Shift(
+            id: 'all',
+            startDate: DateTime.now(),
+            finishDate: DateTime.now(),
+            nurseID: "Todas",
+            type: ShiftType.BUSY));
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Nurse Shift Calendar'),

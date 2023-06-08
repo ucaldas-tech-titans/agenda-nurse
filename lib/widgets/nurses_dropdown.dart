@@ -73,6 +73,9 @@ class _NursesDropdownState extends State<NursesDropdown> {
           return const Text('No nurses available');
         }
 
+        nursesWithLessThan44Hours
+            .add(Nurse(id: 'all', fullName: "Todas", fullLastName: ""));
+
         _selectedNurseID ??= widget.preSelectedNurseID;
 
         return _buildNurseDropdownButton(nursesWithLessThan44Hours);

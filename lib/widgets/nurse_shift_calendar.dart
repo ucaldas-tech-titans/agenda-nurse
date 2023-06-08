@@ -22,9 +22,13 @@ class _NurseShiftCalendarState extends State<NurseShiftCalendar> {
     return Builder(builder: (BuildContext context) {
       List<Shift> displayShifts = widget.shifts;
 
-      displayShifts = displayShifts.where((shift) {
-        return shift.nurseID == widget.nurse.id;
-      }).toList();
+      if (widget.nurse.id == "all") {
+        displayShifts = widget.shifts;
+      } else {
+        displayShifts = displayShifts.where((shift) {
+          return shift.nurseID == widget.nurse.id;
+        }).toList();
+      }
 
       // Agrupa los shifts que se superponen
       List<List<Shift>> overlappingShiftGroups = [];
